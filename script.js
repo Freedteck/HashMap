@@ -1,185 +1,7 @@
-// Linked List
-function LinkedList() {
-    let head = null
-    let tail = null
-
-    const append = (value, key) => {
-        const node = Node(value, key)
-        if (!head) {
-            head = node
-            tail = node
-            return head
-        }
-        let current = head
-        while (current.nextNode) {
-            current = current.nextNode
-        }
-        current.nextNode = node
-        tail = node
-        return current.nextNode
-    }
-
-    const prepend = (value, key) => {
-        const node = Node(value, key)
-        if (!head) {
-            head = node
-            tail = node
-        }
-        let current = head
-        head = node
-        head.nextNode = current
-    }
-
-    const size = () => {
-        let count = 0
-        let current = head
-        while (current) {
-            count++
-            current = current.nextNode
-        }
-        return count
-    }
-
-    const getHead = () => {
-        if (!head) {
-            return "List is Empty"
-        }
-        return head.value
-    }
-
-    const getTail = () => {
-        if (!tail) {
-            return "List is Empty"
-        }
-        return tail.value
-    }
-
-    const at = (index) => {
-        let current = head
-        let position = 0
-        while (current) {
-            if (index === position) {
-                return current.value
-            }
-            current = current.nextNode
-            position++
-        }
-        return "Error: Index not found"
-    }
-
-    const pop = () => {
-        let current = head
-        while (current) {
-            if (current.nextNode === tail) {
-                tail = current
-                current.nextNode = null
-            }
-            current = current.nextNode
-        }
-    }
-
-    const contains = (value) => {
-        let current = head
-        while (current) {
-            if (current.value === value) {
-                return true
-            }
-            current = current.nextNode
-        }
-        return false
-    }
-
-    const find = (value) => {
-        let current = head
-        let position = 0
-        while (current) {
-            if (value === current.value) {
-                return position
-            }
-            current = current.nextNode
-            position++
-        }
-        return null
-    }
-
-    const insertAt = (value, index) => {
-        const node = Node(value)
-        let current = head
-        let shifted = current.nextNode
-        let previous = current
-        let position = 0
-        while (current) {
-            if (index > size() - 1) {
-                console.log("Error: Index out of Bound");
-                break
-            }
-            if (index === 0) {
-                head = node
-                head.nextNode = current
-                break
-            }
-            if (index > 0 && index === position) {
-                current = node
-                previous.nextNode = current
-                current.nextNode = shifted
-            }
-            previous = current
-            current = current.nextNode
-            shifted = previous.nextNode
-            position++
-        }
-    }
-
-    const removeAt = (index) => {
-        let current = head
-        let previous = current
-        let position = 0
-        while (current) {
-            if (index > size() - 1) {
-                console.log("Error: Index out of Bound");
-                break
-            }
-            if (index === 0) {
-                head = current.nextNode
-                break
-            }
-            if (index > 0 && index === position) {
-                previous.nextNode = current.nextNode
-            }
-            previous = current
-            current = current.nextNode
-            position++
-        }
-
-    }
-
-    const toString = () => {
-        let current = head
-        let result = ''
-        while (current) {
-            result += `${current.value} -> `
-            current = current.nextNode
-        }
-        return `${result}null`
-    }
-
-    return { append, prepend, size, getHead, getTail, at, pop, contains, find, insertAt, removeAt, toString }
-}
-
-const list = LinkedList()
-
-// list.append(3)
-// list.append(4);
-// list.append(1);
-// list.append(6);
-// list.prepend(9)
-// list.insertAt(4, 1)
-// list.removeAt(5)
-// console.log(list.toString());
-
-function Node(value, key) {
-    value = value
+// Node 
+function Node(key, value) {
     key = key
+    value = value
     let nextNode = null
 
     return { key, value, nextNode }
@@ -187,9 +9,9 @@ function Node(value, key) {
 
 // Hash Map
 function HashMap() {
-    const array = []
     let totalArray = 16
     const loadFactor = 0.75
+    let buckets = Array(totalArray)
 
     function hash(value) {
         let hashCode = 0
@@ -202,52 +24,209 @@ function HashMap() {
     }
 
     function grow() {
-        if (array.length === loadFactor * totalArray) {
-            totalArray *= 2
+        let size = 0
+        for (const bucket of buckets) {
+            let current = bucket;
+            while (current) {
+                size++;
+                current = current.nextNode;
+            }
         }
+
+        if (size > loadFactor * totalArray) {
+            let newTotal = totalArray * 2
+            const newBuckets = Array(newTotal)
+            for (const bucket of buckets) {
+                let current = bucket;
+                while (current) {
+                    const index = hash(current.key);
+                    const node = Node(current.key, current.value);
+
+                    if (!newBuckets[index]) {
+                        newBuckets[index] = node;
+                    } else {
+                        let newCurrent = newBuckets[index];
+                        while (newCurrent.nextNode) {
+                            newCurrent = newCurrent.nextNode;
+                        }
+                        newCurrent.nextNode = node;
+                    }
+
+                    current = current.nextNode;
+                }
+            }
+            totalArray = newTotal
+            buckets = newBuckets
+
+        }
+        return buckets.length
     }
 
     function set(key, value) {
-        let bucket = hash(key)
-        array[bucket] = list.append(value, key)
-        return array
+        const index = hash(key)
+        let node = Node(key, value)
+
+        if (index < 0 || index >= buckets.length) {
+            throw new Error("Trying to access index out of bound");
+        }
+
+        if (!buckets[index]) {
+            buckets[index] = node
+            grow()
+            return buckets[index]
+        }
+
+        let current = buckets[index]
+        while (current.nextNode) {
+            current = current.nextNode
+        }
+        if (current.key === key) {
+            current.value = value
+            return current
+        }
+
+        current.nextNode = node
+        return node
     }
 
     function get(key) {
-
+        const index = hash(key)
+        let current = buckets[index]
+        while (current) {
+            if (current.key === key) {
+                return current.value
+            }
+            current = current.nextNode
+        }
+        return null
     }
 
     function has(key) {
-
+        const index = hash(key)
+        let current = buckets[index]
+        while (current) {
+            if (current.key === key) {
+                return true
+            }
+            current = current.nextNode
+        }
+        return false
     }
 
     function remove(key) {
+        const index = hash(key);
+        let current = buckets[index];
+        let previous = null;
 
+        while (current) {
+            if (current.key === key) {
+                if (previous) {
+                    previous.nextNode = current.nextNode;
+                } else {
+                    buckets[index] = current.nextNode;
+                }
+                return true
+            }
+
+            previous = current;
+            current = current.nextNode;
+        }
+        return false
     }
 
     function length() {
-
+        let size = 0
+        for (const bucket of buckets) {
+            let current = bucket
+            while (current) {
+                if (current.key) {
+                    size++
+                }
+                current = current.nextNode
+            }
+        }
+        return size
     }
 
     function clear() {
-
+        buckets.fill(null)
     }
 
     function keys() {
-
+        let result = ''
+        for (const bucket of buckets) {
+            let current = bucket
+            while (current) {
+                if (current) {
+                    result += `'${current.key}' `
+                }
+                current = current.nextNode
+            }
+        }
+        return `[${result.trim()}]`
     }
 
     function values() {
-
+        let result = ''
+        for (const bucket of buckets) {
+            let current = bucket
+            while (current) {
+                if (current) {
+                    result += `${current.value} `
+                }
+                current = current.nextNode
+            }
+        }
+        return `[${result.trim()}]`
     }
 
     function entries() {
-
+        let result = ''
+        for (const bucket of buckets) {
+            let current = bucket
+            while (current) {
+                if (current) {
+                    result += `[${current.key}, ${current.value}], `
+                }
+                current = current.nextNode
+            }
+        }
+        const trimed = result.trim()
+        return [trimed.slice(0, -1)]
     }
 
-    return { hash, set, get, has, remove, length, clear, keys, values, entries }
+    return { hash, grow, set, get, has, remove, length, clear, keys, values, entries }
 }
 
 const hashMap = HashMap()
+hashMap.set("rak", 1)
+hashMap.set("arak", 2)
+hashMap.set("mubarak", 3)
+hashMap.set("freed", 4)
+hashMap.remove("freed")
+hashMap.set("dammi", 5)
+hashMap.set("ola", 6)
+hashMap.set("wariz", 7)
+hashMap.set("ope", 8)
+hashMap.set("crown", 9)
+hashMap.set("Mb", 10)
+hashMap.set("basit", 11)
+hashMap.set("ila", 12)
+hashMap.set("ajajd", 13)
+hashMap.set("jgdcdla", 12)
+hashMap.set("ijvdcsdgla", 12)
+hashMap.set("omkh645457", 12)
+hashMap.set("Ola", 0)
+hashMap.set("llo0812wsazsQ", 12)
+hashMap.set("alani", 20)
+hashMap.set("olu", 20)
+// hashMap.clear()
+hashMap.remove("alani")
+hashMap.remove("ope")
 
-console.log(hashMap.set("rak", 10))
+
+console.log(hashMap.entries())
+
+console.log(hashMap.length())
+
+console.log(hashMap.grow());
